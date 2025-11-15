@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>装备栏系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            width: 414px;
+            margin: 0 auto;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            padding: 20px;
+        }
+        
+        .category-title {
+            text-align: center;
+            margin: 15px 0 20px;
+            font-size: 1.4rem;
+            color: #2c3e50;
+            position: relative;
+            padding-bottom: 8px;
+        }
+        
+        .category-title:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            border-radius: 3px;
+        }
+        
+        /* 装备栏样式 - 更新为1-1-1-1-1和1-1-1-1布局 */
+        .equipment-section {
+            margin-bottom: 30px;
+        }
+        
+        .equipment-slots {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        /* 第一行：1-1-1-1-1布局 */
+        .row-1 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            justify-items: center;
+        }
+        
+        /* 第二行：1-1-1-1布局 */
+        .row-2 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            justify-items: center;
+        }
+        
+        .equipment-slot {
+            background-color: #e9ecef;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            width: 70px;
+            height: 70px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #dee2e6;
+        }
+        
+        .equipment-slot.empty {
+            background: linear-gradient(135deg, #e9ecef, #dee2e6);
+            border: 2px dashed #adb5bd;
+        }
+        
+        .equipment-slot.equipped {
+            border: 2px solid transparent;
+        }
+        
+        /* 品阶背景框样式 */
+        .equipment-slot.rarity-white.equipped {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-color: #dee2e6;
+        }
+        
+        .equipment-slot.rarity-green.equipped {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border-color: #b1dfbb;
+        }
+        
+        .equipment-slot.rarity-blue.equipped {
+            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+            border-color: #abdde5;
+        }
+        
+        .equipment-slot.rarity-purple.equipped {
+            background: linear-gradient(135deg, #e2e3f5, #d6d8f0);
+            border-color: #c8cbea;
+        }
+        
+        .equipment-slot.rarity-orange.equipped {
+            background: linear-gradient(135deg, #ffeaa7, #ffdf7e);
+            border-color: #ffd54f;
+        }
+        
+        .equipment-slot.rarity-red.equipped {
+            background: linear-gradient(135deg, #f8d7da, #f1b0b7);
+            border-color: #e9959f;
+        }
+        
+        .slot-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        
+        /* 仓库样式 - 改为一行四个 */
+        .storage-section {
+            margin-top: 30px;
+        }
+        
+        .storage-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            justify-items: center;
+        }
+        
+        .storage-item {
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            width: 80px;
+            height: 80px;
+            justify-content: center;
+        }
+        
+        .storage-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 仓库品阶背景 */
+        .storage-item.rarity-white {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 2px solid #dee2e6;
+        }
+        
+        .storage-item.rarity-green {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border: 2px solid #b1dfbb;
+        }
+        
+        .storage-item.rarity-blue {
+            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+            border: 2px solid #abdde5;
+        }
+        
+        .storage-item.rarity-purple {
+            background: linear-gradient(135deg, #e2e3f5, #d6d8f0);
+            border: 2px solid #c8cbea;
+        }
+        
+        .storage-item.rarity-orange {
+            background: linear-gradient(135deg, #ffeaa7, #ffdf7e);
+            border: 2px solid #ffd54f;
+        }
+        
+        .storage-item.rarity-red {
+            background: linear-gradient(135deg, #f8d7da, #f1b0b7);
+            border: 2px solid #e9959f;
+        }
+        
+        .item-icon {
+            font-size: 24px;
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 16px;
+            padding: 25px;
+            width: 350px;
+            max-width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-title {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #2c3e50;
+        }
+        
+        .modal-items {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        
+        .modal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .modal-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .modal-item-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-item-icon {
+            font-size: 24px;
+        }
+        
+        .modal-item-details {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-item-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .close-modal {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        
+        .close-modal:hover {
+            background-color: #5a6268;
+        }
+        
+        /* 详情模态框样式 */
+        .detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .detail-content {
+            background-color: white;
+            border-radius: 16px;
+            padding: 25px;
+            width: 340px;
+            max-width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .detail-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .detail-item-box {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .detail-item-icon {
+            font-size: 36px;
+        }
+        
+        .detail-info {
+            flex: 1;
+        }
+        
+        .detail-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        
+        .detail-type {
+            font-size: 1rem;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+        }
+        
+        .detail-rarity {
+            font-size: 0.9rem;
+            padding: 4px 12px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+        
+        .detail-description {
+            font-size: 0.95rem;
+            color: #7f8c8d;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .detail-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .change-equip-btn {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+        
+        .change-equip-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 117, 252, 0.3);
+        }
+        
+        .close-detail-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .close-detail-btn:hover {
+            background-color: #5a6268;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+
+        /* 移除底部导航栏相关样式 */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 装备栏部分 -->
+        <div class="equipment-section">
+            <h2 class="category-title">当前装备</h2>
+            <div class="equipment-slots">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+        
+        <!-- 仓库部分 -->
+        <div class="storage-section">
+            <h2 class="category-title">装备仓库</h2>
+            <div class="storage-grid" id="storage-grid">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
+        
+        <!-- 选择装备模态框 -->
+        <div id="equip-modal" class="modal">
+            <div class="modal-content">
+                <h3 class="modal-title">选择要装备的物品</h3>
+                <div class="modal-items" id="modal-items">
+                    <!-- 动态填充 -->
+                </div>
+                <button class="close-modal">关闭</button>
+            </div>
+        </div>
+        
+        <!-- 物品详情模态框 -->
+        <div id="detail-modal" class="detail-modal">
+            <div class="detail-content" id="detail-content">
+                <!-- 动态填充 -->
+            </div>
+        </div>
+        
+        <!-- 装备详情模态框 -->
+        <div id="equipment-detail-modal" class="detail-modal">
+            <div class="detail-content" id="equipment-detail-content">
+                <!-- 动态填充 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入外部数据文件 -->
+    <script src="equipment.js"></script>
+
+    <script>
+        // 类型映射
+        const typeMap = {
+            'watch': '手表',
+            'phone': '手机',
+            'shirt': '衬衫',
+            'suit': '套装',
+            'cup': '水杯',
+            'shoes': '鞋子',
+            'socks': '袜子',
+            'underwear': '内裤',
+            'bag': '包包'
+        };
+
+        // 品阶文本映射和排序权重
+        const rarityMap = {
+            'white': { name: '白色', weight: 1 },
+            'green': { name: '绿色', weight: 2 },
+            'blue': { name: '蓝色', weight: 3 },
+            'purple': { name: '紫色', weight: 4 },
+            'orange': { name: '橙色', weight: 5 },
+            'red': { name: '红色', weight: 6 }
+        };
+
+        // 装备槽类型排序权重
+        const slotTypeOrder = {
+            'watch': 1,
+            'phone': 2,
+            'socks': 3,
+            'underwear': 4,
+            'bag': 5,
+            'shirt': 6,
+            'suit': 7,
+            'cup': 8,
+            'shoes': 9
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查数据是否已加载
+            if (window.equipmentData) {
+                initializeApp(window.equipmentData);
+            } else {
+                console.error('装备数据未加载');
+                document.querySelector('.equipment-slots').innerHTML = '<div class="loading">数据加载失败</div>';
+                document.getElementById('storage-grid').innerHTML = '<div class="loading">数据加载失败</div>';
+            }
+            
+            // 关闭模态框
+            const closeModal = document.querySelector('.close-modal');
+            closeModal.addEventListener('click', function() {
+                document.getElementById('equip-modal').style.display = 'none';
+            });
+            
+            // 点击模态框外部关闭
+            document.getElementById('equip-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                }
+            });
+            
+            // 点击详情模态框外部关闭
+            document.getElementById('detail-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                }
+            });
+            
+            // 点击装备详情模态框外部关闭
+            document.getElementById('equipment-detail-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                }
+            });
+        });
+
+        // 初始化应用
+        function initializeApp(equipmentData) {
+            // 初始化装备槽
+            initializeEquipmentSlots(equipmentData);
+            
+            // 初始化仓库（带排序）
+            initializeStorage(equipmentData);
+        }
+
+        // 初始化装备槽 - 更新为1-1-1-1-1和1-1-1-1布局
+        function initializeEquipmentSlots(equipmentData) {
+            const equipmentSlotsContainer = document.querySelector('.equipment-slots');
+            equipmentSlotsContainer.innerHTML = '';
+            
+            // 按sortOrder排序装备槽
+            const sortedSlots = [...equipmentData.equipmentSlots].sort((a, b) => a.sortOrder - b.sortOrder);
+            
+            // 第一行：1-1-1-1-1布局
+            const row1 = document.createElement('div');
+            row1.className = 'row-1';
+            
+            // 分配第一行的5个装备槽
+            for (let i = 0; i < 5; i++) {
+                const slotElement = createEquipmentSlot(sortedSlots[i], equipmentData);
+                row1.appendChild(slotElement);
+            }
+            
+            // 第二行：1-1-1-1布局
+            const row2 = document.createElement('div');
+            row2.className = 'row-2';
+            
+            // 分配第二行的4个装备槽
+            for (let i = 5; i < 9; i++) {
+                const slotElement = createEquipmentSlot(sortedSlots[i], equipmentData);
+                row2.appendChild(slotElement);
+            }
+            
+            equipmentSlotsContainer.appendChild(row1);
+            equipmentSlotsContainer.appendChild(row2);
+        }
+
+        // 创建单个装备槽
+        function createEquipmentSlot(slot, equipmentData) {
+            const slotElement = document.createElement('div');
+            const equippedItem = equipmentData.storageItems.find(item => item.id === slot.equipped);
+            
+            if (equippedItem) {
+                slotElement.className = `equipment-slot equipped rarity-${equippedItem.rarity}`;
+                slotElement.innerHTML = `
+                    <div class="slot-icon">${slot.icon}</div>
+                `;
+            } else {
+                slotElement.className = 'equipment-slot empty';
+                slotElement.innerHTML = `
+                    <div class="slot-icon">${slot.icon}</div>
+                `;
+            }
+            
+            slotElement.setAttribute('data-slot', slot.id);
+            slotElement.setAttribute('data-equipped', slot.equipped || '');
+            
+            // 点击事件：已装备的显示详情，未装备的显示选择窗口
+            slotElement.addEventListener('click', function() {
+                if (slot.equipped) {
+                    // 已装备：显示装备详情
+                    showEquipmentDetail(slot, equippedItem, equipmentData);
+                } else {
+                    // 未装备：显示选择窗口
+                    showEquipmentModal(slot.id, equipmentData);
+                }
+            });
+            
+            return slotElement;
+        }
+
+        // 初始化仓库 - 添加排序功能
+        function initializeStorage(equipmentData) {
+            const storageGrid = document.getElementById('storage-grid');
+            storageGrid.innerHTML = '';
+            
+            // 排序仓库物品：先按品质，再按装备槽顺序
+            const sortedItems = [...equipmentData.storageItems].sort((a, b) => {
+                // 先按品质排序
+                const rarityDiff = rarityMap[b.rarity].weight - rarityMap[a.rarity].weight;
+                if (rarityDiff !== 0) return rarityDiff;
+                
+                // 品质相同，按装备槽类型排序
+                return slotTypeOrder[a.type] - slotTypeOrder[b.type];
+            });
+            
+            sortedItems.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = `storage-item rarity-${item.rarity}`;
+                itemElement.innerHTML = `
+                    <div class="item-icon">${item.icon}</div>
+                `;
+                
+                itemElement.setAttribute('data-id', item.id);
+                itemElement.setAttribute('data-type', item.type);
+                itemElement.setAttribute('data-name', item.name);
+                itemElement.setAttribute('data-rarity', item.rarity);
+                itemElement.setAttribute('data-desc', item.description);
+                
+                itemElement.addEventListener('click', function() {
+                    showItemDetail(item);
+                });
+                
+                storageGrid.appendChild(itemElement);
+            });
+        }
+
+        // 显示装备选择模态框
+        function showEquipmentModal(slotType, equipmentData) {
+            const modal = document.getElementById('equip-modal');
+            const modalItems = document.getElementById('modal-items');
+            
+            // 清空模态框内容
+            modalItems.innerHTML = '';
+            
+            // 获取该槽位类型的仓库物品
+            const storageItems = equipmentData.storageItems.filter(item => item.type === slotType);
+            
+            if (storageItems.length === 0) {
+                modalItems.innerHTML = '<p style="text-align: center; padding: 20px;">仓库中没有该类型的物品</p>';
+            } else {
+                storageItems.forEach(item => {
+                    const modalItem = document.createElement('div');
+                    modalItem.className = `modal-item rarity-${item.rarity}`;
+                    modalItem.innerHTML = `
+                        <div class="modal-item-info">
+                            <div class="modal-item-icon">${item.icon}</div>
+                            <div class="modal-item-details">
+                                <div class="modal-item-name">${item.name}</div>
+                            </div>
+                        </div>
+                        <button class="equip-btn" data-item="${item.id}">装备</button>
+                    `;
+                    
+                    modalItems.appendChild(modalItem);
+                    
+                    // 为模态框中的装备按钮添加事件
+                    const equipBtn = modalItem.querySelector('.equip-btn');
+                    equipBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        
+                        // 更新装备槽
+                        updateEquipmentSlot(slotType, item.id, equipmentData);
+                        
+                        // 关闭模态框
+                        modal.style.display = 'none';
+                    });
+                });
+            }
+            
+            // 显示模态框
+            modal.style.display = 'flex';
+        }
+
+        // 显示物品详情（仓库中的物品）
+        function showItemDetail(item) {
+            const detailModal = document.getElementById('detail-modal');
+            const detailContent = document.getElementById('detail-content');
+            
+            // 更新详情模态框内容
+            detailContent.innerHTML = `
+                <div class="detail-header">
+                    <div class="detail-item-box rarity-${item.rarity}">
+                        <div class="detail-item-icon">${item.icon}</div>
+                    </div>
+                    <div class="detail-info">
+                        <div class="detail-name">${item.name}</div>
+                        <div class="detail-type">${typeMap[item.type]}</div>
+                        <div class="detail-rarity rarity-${item.rarity}">${rarityMap[item.rarity].name}</div>
+                    </div>
+                </div>
+                <div class="detail-description">${item.description}</div>
+            `;
+            
+            // 显示详情模态框
+            detailModal.style.display = 'flex';
+        }
+
+        // 显示装备详情（已装备的物品）
+        function showEquipmentDetail(slot, item, equipmentData) {
+            const detailModal = document.getElementById('equipment-detail-modal');
+            const detailContent = document.getElementById('equipment-detail-content');
+            
+            // 更新详情模态框内容
+            detailContent.innerHTML = `
+                <div class="detail-header">
+                    <div class="detail-item-box rarity-${item.rarity}">
+                        <div class="detail-item-icon">${item.icon}</div>
+                    </div>
+                    <div class="detail-info">
+                        <div class="detail-name">${item.name}</div>
+                        <div class="detail-type">${typeMap[item.type]}</div>
+                        <div class="detail-rarity rarity-${item.rarity}">${rarityMap[item.rarity].name}</div>
+                    </div>
+                </div>
+                <div class="detail-description">${item.description}</div>
+                <div class="detail-actions">
+                    <button class="detail-btn change-equip-btn" data-slot="${slot.id}">更换装备</button>
+                    <button class="detail-btn close-detail-btn">关闭</button>
+                </div>
+            `;
+            
+            // 为更换装备按钮添加事件
+            const changeEquipBtn = detailContent.querySelector('.change-equip-btn');
+            changeEquipBtn.addEventListener('click', function() {
+                detailModal.style.display = 'none';
+                showEquipmentModal(slot.id, equipmentData);
+            });
+            
+            // 为关闭按钮添加事件
+            const closeDetailBtn = detailContent.querySelector('.close-detail-btn');
+            closeDetailBtn.addEventListener('click', function() {
+                detailModal.style.display = 'none';
+            });
+            
+            // 显示详情模态框
+            detailModal.style.display = 'flex';
+        }
+
+        // 更新装备槽
+        function updateEquipmentSlot(slotType, itemId, equipmentData) {
+            // 更新数据
+            const slotIndex = equipmentData.equipmentSlots.findIndex(slot => slot.id === slotType);
+            if (slotIndex !== -1) {
+                equipmentData.equipmentSlots[slotIndex].equipped = itemId;
+            }
+            
+            // 重新初始化装备槽
+            initializeEquipmentSlots(equipmentData);
+        }
+    </script>
+</body>
+</html>
